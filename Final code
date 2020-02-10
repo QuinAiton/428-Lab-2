@@ -1,0 +1,326 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Jan 31 16:02:49 2020
+
+@author: Quinten Aiton
+"""
+
+import arcpy   
+arcpy.env.overwriteOutput = true 
+arcpy.env.workspace = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb"
+Geog428_Assignment2 = arcpy.CreateFileGDB_management('C:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb")
+
+#Make Layers 
+Crimes = arcpy.MakeFeatureLayer_managment (r"E:\Users\A-10\Desktop\Geog_428_Lab_1 \Victoria_Crime", 'Crimes')
+Neighbourhood_Boundries = arcpy.MakeFeatureLayer_managment(r"E:\Users\A-10\Desktop\Geog_428_Lab_1 \Neighbourhood_Boundries", 'Neighbourhood_Boundries')  
+Schools = arcpy.MakeFeatureLayer_managment(r"E:\Users\A-10\Desktop\Geog_428_Lab_1\Schools",'Schools') 
+Parks = arcpy.MakeFeatureLayer_managment(r"E:\Users\A-10\Desktop\Geog_428_Lab_1\Parks_maintained_by_the_City_of_Victoria",'Parks') 
+ 
+#Question 1 
+# Script parameters
+Parks_maintained_by_the_City_of_Victoria = arcpy.GetParameterAsText(0) or "Parks_maintained_by_the_City_of_Victoria"
+Victoria_Crime = arcpy.GetParameterAsText(1) or "Victoria_Crime"
+# Local variables:
+Victoria_Crime_Clip1 = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Victoria_Crime_Clip1"
+# Process: Clip
+arcpy.Clip_analysis(in_features=Victoria_Crime, clip_features=Parks_maintained_by_the_City_of_Victoria, out_feature_class=Victoria_Crime_Clip1, cluster_tolerance="")
+# Process: Get Count
+arcpy.GetCount_management(in_rows=Victoria_Crime_Clip1)
+
+
+#Question 2  
+PropertyCrime = "Property Crime"
+buffer5 = "500 meters"
+# Local variables:
+Neighbourhood_Boundaries = "Neighbourhood_Boundaries"
+Neighbourhood_Boundaries__2_ = Neighbourhood_Boundaries
+Victoria_Crime = "Victoria_Crime"
+Victoria_Crime__3_ = Victoria_Crime
+v2016NeighbourhoodCrime = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Neighbourhood_Boundaries_Int"
+Parks_maintained_by_the_City_of_Victoria = "Parks_maintained_by_the_City_of_Victoria"
+Parks_maintained_by_the_City1 = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Parks_maintained_by_the_City1"
+CrimesByParks = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Neighbourhood_Boundaries_Int1"
+
+# Process: Select Layer By Attribute
+arcpy.SelectLayerByAttribute_management(in_layer_or_view=Neighbourhood_Boundaries, selection_type="NEW_SELECTION", where_clause="Neighbourh = 'Oaklands' Or Neighbourh = 'Fernwood' Or Neighbourh = 'North Jubilee' Or Neighbourh = 'South Jubilee'", invert_where_clause="")
+# Process: Select Layer By Attribute (2)
+arcpy.SelectLayerByAttribute_management(in_layer_or_view=Victoria_Crime, selection_type="NEW_SELECTION", where_clause="incident_d LIKE '%2016%' And parent_inc = 'Property Crime'", invert_where_clause="")
+# Process: Intersect
+arcpy.Intersect_analysis(in_features="Neighbourhood_Boundaries #;Victoria_Crime #", out_feature_class=v2016NeighbourhoodCrime, join_attributes="ALL", cluster_tolerance="", output_type="INPUT")
+# Process: Buffer
+arcpy.Buffer_analysis(in_features=Parks_maintained_by_the_City_of_Victoria, out_feature_class=Parks_maintained_by_the_City1, buffer_distance_or_field=buffer5, line_side="FULL", line_end_type="ROUND", dissolve_option="ALL", dissolve_field="", method="PLANAR")
+# Process: Clip
+arcpy.Clip_analysis(in_features=v2016NeighbourhoodCrime, clip_features=Parks_maintained_by_the_City1, out_feature_class=CrimesByParks, cluster_tolerance="")
+# Process: Get Count
+arcpy.GetCount_management(in_rows=CrimesByParks)
+
+
+#Question 3 
+# Local variables:
+Victoria_Crime = "Victoria_Crime"
+Victoria_Crime__2_ = Victoria_Crime
+Neighbourhood_Boundaries = "Neighbourhood_Boundaries"
+Neighbourhood_Boundaries__2_ = Neighbourhood_Boundaries
+Victoria_Crime__3_ = Victoria_Crime__2_
+v2017crimes = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Neighbourhood_Boundaries_Int2"
+Schools = "Schools"
+Schools_Buffer = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Schools_Buffer"
+Output_Feature_Class = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Neighbourhood_Boundaries_Int3"
+
+# Process: Select Layer By Attribute
+arcpy.SelectLayerByAttribute_management(in_layer_or_view=Victoria_Crime, selection_type="NEW_SELECTION", where_clause="incident_d LIKE '%2017%'", invert_where_clause="NON_INVERT")
+# Process: Select Layer By Attribute (2)
+arcpy.SelectLayerByAttribute_management(in_layer_or_view=Neighbourhood_Boundaries, selection_type="NEW_SELECTION", where_clause="Neighbourh <> 'Victoria West'", invert_where_clause="")
+# Process: Select Layer By Attribute (3)
+arcpy.SelectLayerByAttribute_management(in_layer_or_view=Victoria_Crime__2_, selection_type="SUBSET_SELECTION", where_clause="parent_inc = 'Drugs' Or parent_inc = 'Liquor' Or parent_inc = 'Disorder'", invert_where_clause="")
+# Process: Intersect
+arcpy.Intersect_analysis(in_features="Neighbourhood_Boundaries #;Victoria_Crime #", out_feature_class=v2017crimes, join_attributes="ALL", cluster_tolerance="", output_type="INPUT")
+# Process: Buffer
+arcpy.Buffer_analysis(in_features=Schools, out_feature_class=Schools_Buffer, buffer_distance_or_field=buffer5, line_side="FULL", line_end_type="ROUND", dissolve_option="ALL", dissolve_field="", method="PLANAR")
+# Process: Clip
+arcpy.Clip_analysis(in_features=v2017crimes, clip_features=Schools_Buffer, out_feature_class=Output_Feature_Class, cluster_tolerance="")
+# Process: Get Count
+arcpy.GetCount_management(in_rows=Output_Feature_Class)
+
+ 
+#Question 4  
+#variables
+Buffer1="100 meters"
+Neighbourhood_Boundaries = "Neighbourhood_Boundaries"
+Neighbourhood_Boundaries__2_ = Neighbourhood_Boundaries
+Victoria_Crime = "Victoria_Crime"
+Victoria_Crime__3_ = Victoria_Crime
+v2016NeighbourhoodCrime = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Neighbourhood_Boundaries_Int"
+Parks_maintained_by_the_City_of_Victoria = "Parks_maintained_by_the_City_of_Victoria"
+Parks_maintained_by_the_City1 = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Parks_maintained_by_the_City1"
+CrimesByParks = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Neighbourhood_Boundaries_Int1"
+
+# Process: Select Layer By Attribute
+arcpy.SelectLayerByAttribute_management(in_layer_or_view=Neighbourhood_Boundaries, selection_type="NEW_SELECTION", where_clause="Neighbourh = 'Oaklands' Or Neighbourh = 'Fernwood' Or Neighbourh = 'North Jubilee' Or Neighbourh = 'South Jubilee'", invert_where_clause="")
+# Process: Select Layer By Attribute (2)
+arcpy.SelectLayerByAttribute_management(in_layer_or_view=Victoria_Crime, selection_type="NEW_SELECTION", where_clause="incident_d LIKE '%2017%' And parent_inc = 'Property Crime'", invert_where_clause="")
+# Process: Intersect
+arcpy.Intersect_analysis(in_features="Neighbourhood_Boundaries #;Victoria_Crime #", out_feature_class=v2016NeighbourhoodCrime, join_attributes="ALL", cluster_tolerance="", output_type="INPUT")
+# Process: Buffer
+arcpy.Buffer_analysis(in_features=Parks_maintained_by_the_City_of_Victoria, out_feature_class=Parks_maintained_by_the_City1, buffer_distance_or_field= Buffer1, line_side="FULL", line_end_type="ROUND", dissolve_option="ALL", dissolve_field="", method="PLANAR")
+# Process: Clip
+arcpy.Clip_analysis(in_features=v2016NeighbourhoodCrime, clip_features=Parks_maintained_by_the_City1, out_feature_class=CrimesByParks, cluster_tolerance="")
+# Process: Get Count
+arcpy.GetCount_management(in_rows=CrimesByParks)
+  
+ 
+#Question 5 
+#Variables  
+Victoria_Crime = "Victoria_Crime"
+Victoria_Crime2 = Victoria_Crime
+Neighbourhood_Boundaries = "Neighbourhood_Boundaries"
+Neighbourhood_Boundaries2 = Neighbourhood_Boundaries
+Victoria_Crime3 = Victoria_Crime2
+Buffer1 = "100 Meters"
+v2017crimes = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Neighbourhood_Boundaries_Int2"
+Schools = "Schools"
+Schools_Buffer = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Schools_Buffer"
+Output_Feature_Class = r"Z:\My Documents\Geog428_Assignment2\Geog428_Assignment2\Geog428_Assignment2.gdb\Neighbourhood_Boundaries_Int3"
+
+# Process: Select Layer By Attribute
+arcpy.SelectLayerByAttribute_management(in_layer_or_view=Victoria_Crime, selection_type="NEW_SELECTION", where_clause="incident_d LIKE '%2015%'")
+# Process: Select Layer By Attribute (2)
+arcpy.SelectLayerByAttribute_management(in_layer_or_view=Neighbourhood_Boundaries, selection_type="NEW_SELECTION", where_clause="Neighbourh <> 'Victoria West'")
+# Process: Select Layer By Attribute (3)
+arcpy.SelectLayerByAttribute_management(in_layer_or_view=Victoria_Crime2, selection_type="SUBSET_SELECTION", where_clause="parent_inc = 'Drugs' Or parent_inc = 'Liquor' Or parent_inc = 'Disorder'")
+# Process: Intersect
+arcpy.Intersect_analysis(in_features="Neighbourhood_Boundaries #;Victoria_Crime #", out_feature_class=v2017crimes, join_attributes="ALL", output_type="INPUT")
+# Process: Buffer
+arcpy.Buffer_analysis(in_features=Schools, out_feature_class=Schools_Buffer, buffer_distance_or_field= Buffer1, line_side="FULL", line_end_type="ROUND", dissolve_option="ALL", method="PLANAR")
+# Process: Clip
+arcpy.Clip_analysis(in_features=v2017crimes, clip_features=Schools_Buffer, out_feature_class=Output_Feature_Class, cluster_tolerance="")
+# Process: Get Count
+arcpy.GetCount_management(in_rows=Output_Feature_Class)
+
+
+  
+#Task 5   
+#create arrays for days of the week
+robbery_days = [0,0,0,0,0,0,0] 
+propertycrime_days = [0,0,0,0,0,0,0]
+assault_days = [0,0,0,0,0,0,0]
+theft_days = [0,0,0,0,0,0,0] 
+theft_from_vehicle_days = [0,0,0,0,0,0,0] 
+
+#loop through dataset using a curser
+columns = ['day_of_wee', 'parent_inc']  
+curObj = arcpy.da.SearchCursor("Victoria_Crime",columns)
+for row in curObj:
+    if row[1]=='Robbery':
+        if row[0]=='Monday':
+            robbery_days[0]=robbery_days[0] + 1
+        elif row[0]=='Tuesday':
+            robbery_days[1]=robbery_days[1] + 1
+        elif row[0]=='Wednesday':
+            robbery_days[2]=robbery_days[2] + 1 
+        elif row[0]=='Thursday': 
+            robbery_days[3]=robbery_days[3] + 1 
+        elif row[0]=='Friday': 
+            robbery_days[4]=robbery_days[4] + 1 
+        elif row[0]=='Saturday': 
+            robbery_days[5]=robbery_days[5] + 1 
+        elif row[0]=='Sunday': 
+            robbery_days[6]=robbery_days[6] + 1    
+#loop for assault
+    elif row[1]=='Assault':
+        if row[0]=='Monday':
+            assault_days[0] = assault_days[0] + 1
+        elif row[0]=='Tuesday':
+            assault_days[1] = assault_days[1] + 1
+        elif row[0]=='Wednesday':
+            assault_days[2] = assault_days[2] + 1 
+        elif row [0] == 'Thursday': 
+            assault_days[3] = assault_days[3] + 1 
+        elif row [0] == 'Friday': 
+            assault_days[4] = assault_days[4] + 1 
+        elif row [0] == 'Saturday': 
+            assault_days[5] = assault_days[5] + 1 
+        elif row [0] == 'Sunday': 
+            assault_days[6] = assault_days[6] + 1      
+#loop for property crime           
+    elif row[1]=='Property Crime':
+        if row[0]=='Monday':
+            propertycrime_days[0] = propertycrime_days[0] + 1
+        elif row[0]=='Tuesday':
+            propertycrime_days[1] = propertycrime_days[1] + 1
+        elif row[0]=='Wednesday':
+            propertycrime_days[2] = propertycrime_days[2] + 1 
+        elif row [0] == 'Thursday': 
+            propertycrime_days[3] = propertycrime_days[3] + 1 
+        elif row [0] == 'Friday': 
+            propertycrime_days[4] = propertycrime_days[4] + 1 
+        elif row [0] == 'Saturday': 
+            propertycrime_days[5] = propertycrime_days[5] + 1 
+        elif row [0] == 'Sunday': 
+            propertycrime_days[6] = propertycrime_days[6] + 1  
+#loop for Theft           
+    elif row[1]=='Theft':
+        if row[0]=='Monday':
+            theft_days[0] = theft_days[0] + 1
+        elif row[0]=='Tuesday':
+            theft_days[1] = theft_days[1] + 1
+        elif row[0]=='Wednesday':
+            theft_days[2] = theft_days[2] + 1 
+        elif row [0] == 'Thursday': 
+            theft_days[3] = theft_days[3] + 1 
+        elif row [0] == 'Friday': 
+            theft_days[4] = theft_days[4] + 1 
+        elif row [0] == 'Saturday': 
+            theft_days[5] = theft_days[5] + 1 
+        elif row [0] == 'Sunday': 
+            theft_days[6] = theft_days[6] + 1   
+ 
+#loop for theft from vehical 
+    elif row[1]=='Theft from Vehicle':
+        if row[0]=='Monday':
+            theft_from_vehicle_days[0] = theft_from_vehicle_days[0] + 1
+        elif row[0]=='Tuesday':
+            theft_from_vehicle_days[1] = theft_from_vehicle_days[1] + 1
+        elif row[0]=='Wednesday':
+            theft_from_vehicle_days[2] = theft_from_vehicle_days[2] + 1 
+        elif row [0] == 'Thursday': 
+            theft_from_vehicle_days[3] = theft_from_vehicle_days[3] + 1 
+        elif row [0] == 'Friday': 
+            theft_from_vehicle_days[4] = theft_from_vehicle_days[4] + 1 
+        elif row [0] == 'Saturday': 
+            theft_from_vehicle_days[5] = theft_from_vehicle_days[5] + 1 
+        elif row [0] == 'Sunday': 
+            theft_from_vehicle_days[6] = theft_from_vehicle_days[6] + 1  
+                         
+import operator
+# find and print day with highest occurrence of robbery
+index,value = max(enumerate(robbery_days),key = operator.itemgetter(1))
+if index==0: 
+    day='Monday'
+elif index==1:
+    day='Tuesday' 
+elif index==2: 
+    day='Wednesday' 
+elif index==3: 
+    day='Thursday' 
+elif index==4: 
+    day='Friday' 
+elif index==5: 
+    day='Saturday' 
+elif index==6: 
+    day='Sunday' 
+print('Highest rate of robberies was on ',day,'(', value, ')') 
+
+#Assult 
+index, value = max(enumerate(assault_days), key=operator.itemgetter(1))
+if index==0: 
+    day='Monday'
+elif index==1:
+    day='Tuesday' 
+elif index==2: 
+    day='Wednesday' 
+elif index==3: 
+    day='Thursday' 
+elif index==4: 
+    day='Friday' 
+elif index==5: 
+    day='Saturday' 
+elif index==6: 
+    day='Sunday' 
+print('Highest rate of assaults was on ', day, ' (', value, ')')
+ 
+#Property crime 
+index, value = max(enumerate(propertycrime_days), key=operator.itemgetter(1))
+if index==0: 
+    day='Monday'
+elif index==1:
+    day='Tuesday' 
+elif index==2: 
+    day='Wednesday' 
+elif index==3: 
+    day='Thursday' 
+elif index==4: 
+    day='Friday' 
+elif index==5: 
+    day='Saturday' 
+elif index==6: 
+    day='Sunday' 
+print('Highest rate of property crime was on ', day, ' (', value, ')')  
+ 
+#Theft  
+index, value = max(enumerate(theft_days), key=operator.itemgetter(1))
+if index==0: 
+    day='Monday'
+elif index==1:
+    day='Tuesday' 
+elif index==2: 
+    day='Wednesday' 
+elif index==3: 
+    day='Thursday' 
+elif index==4: 
+    day='Friday' 
+elif index==5: 
+    day='Saturday' 
+elif index==6: 
+    day='Sunday' 
+print('Highest rate of theft was on ', day, ' (', value, ')')  
+ 
+#theft from vehical 
+index, value = max(enumerate(theft_from_vehicle_days), key=operator.itemgetter(1))
+if index==0: 
+    day='Monday'
+elif index==1:
+    day='Tuesday' 
+elif index==2: 
+    day='Wednesday' 
+elif index==3: 
+    day='Thursday' 
+elif index==4: 
+    day='Friday' 
+elif index==5: 
+    day='Saturday' 
+elif index==6: 
+    day='Sunday' 
+print('Highest rate of theft from vehicals was on ', day, ' (', value, ')')  
+
